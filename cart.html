@@ -1,0 +1,51 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Cart - FoodieExpress</title><link rel="stylesheet" href="style.css"></head>
+<body data-page="cart"><section><div class="wrap"><h1 class="pt">Your Cart</h1><p class="sub">Review your items and place the order</p>
+<div class="two"><div class="box"><div id="items"></div><div id="orders"></div></div>
+<div class="box"><div class="sum"><div><span>Subtotal</span><span id="sub">₹0</span></div><div><span>Discount</span><span id="dis">−₹0</span></div><div><span>Delivery</span><span id="del">₹0</span></div><div class="tot"><span>Total</span><span id="tot">₹0</span></div></div>
+<div class="cpn"><input id="cp" placeholder="Coupon (FOOD10)"><button class="btn" id="apply">Apply</button></div><div class="err" id="cerr"></div>
+<form id="f" novalidate><h3>Delivery Details</h3><div><input id="name" placeholder="Full Name"><div class="err" id="e1"></div></div><div><input id="phone" placeholder="Phone (10 digits)"><div class="err" id="e2"></div></div>
+<div><textarea id="addr" rows="2" placeholder="Delivery Address"></textarea><div class="err" id="e3"></div></div>
+<select id="pay"><option>UPI</option><option>Cash on Delivery</option><option>Credit/Debit Card</option></select><button class="btn" id="place">Place Order</button><button type="button" class="btn alt" id="clr">Clear Cart</button></form>
+<div class="ok" id="ok"></div><div class="track" id="tr" style="display:none"><div>Placed</div><div>Preparing</div><div>On the way</div><div>Delivered</div></div></div></div></div></section>
+<script src="app.js"></script><script>
+let cpn=ls('coupon',null),orders=[],pollH=null;const STAT=['Placed','Preparing','On the way','Delivered'];
+async function loadOrders(){                      // order history of the logged-in user from Firebase
+ if(!user){orders=[];drawCart();return}
+ try{const o=await api('userOrders/'+ekey(user.email));orders=o?Object.values(o).filter(Boolean).sort((a,b)=>b.createdAt-a.createdAt):[]}catch{orders=[]}
+ drawCart()}
+function drawCart(){const ids=Object.keys(cart).filter(id=>MENU.find(x=>x.id==id));let sub=0;
+ Object.keys(cart).forEach(id=>{if(!ids.includes(id))delete cart[id]});
+ $('#items').innerHTML=ids.length?ids.map(id=>{const m=MENU.find(x=>x.id==id),q=cart[id];sub+=m.price*q;return `<div class="item"><span style="font-size:2rem">${m.emoji}</span><div style="flex:1"><b>${m.name}</b><br><small>₹${m.price} each</small></div>
+ <div class="qty"><button data-q="-1" data-i="${id}">−</button><span>${q}</span><button data-q="1" data-i="${id}">+</button></div><b>₹${m.price*q}</b><button class="rm" data-rm="${id}">🗑️</button></div>`}).join(''):'<p class="empty">Your cart is empty 🛒<br><br><a href="menu.html" class="btn">Browse Menu</a></p>';
+ let dis=0,del=sub>=500||!sub?0:30;if(cpn){const c=COUPONS[cpn];if(c.t=='p')dis=Math.round(sub*c.v/100);if(c.t=='f')dis=Math.min(c.v,sub);if(c.t=='d')del=0}
+ $('#sub').textContent='₹'+sub;$('#dis').textContent='−₹'+dis;$('#del').textContent=del?'₹'+del:'FREE';$('#tot').textContent='₹'+(sub-dis+del);window.TOT={sub,dis,del,total:sub-dis+del};cnt();
+ $('#orders').innerHTML=orders.length?'<h3 style="margin-top:22px">Your Orders</h3>'+orders.slice(0,5).map((o,i)=>`<div class="item"><div><b>#${esc(o.id)}</b> · ₹${o.total} · <span class="tag s">${esc(o.status)}</span><br><small>${new Date(o.createdAt).toLocaleString()}</small></div>
+ <div><button class="add" data-re="${i}">Reorder</button> ${o.status!='Delivered'?`<button class="add" data-tr="${esc(o.id)}">Track</button>`:''}</div></div>`).join(''):''}
+function track(id){                              // live tracker: polls order status stored in Firebase
+ clearInterval(pollH);const s=$$('#tr div');$('#tr').style.display='flex';
+ const upd=async()=>{try{const st=await api(`userOrders/${ekey(user.email)}/${id}/status`);const i=Math.max(0,STAT.indexOf(st));s.forEach((x,j)=>x.className=j<=i?'done':'');if(i==3){clearInterval(pollH);loadOrders()}}catch{}};
+ upd();pollH=setInterval(upd,3000)}
+document.addEventListener('click',e=>{const d=e.target.dataset;
+ if(d.q){cart[d.i]+=+d.q;if(cart[d.i]<=0)delete cart[d.i];save('cart',cart);drawCart()}
+ if(d.rm){delete cart[d.rm];save('cart',cart);drawCart();toast('Item removed')}
+ if(d.re){orders[d.re].items.forEach(x=>cart[x.id]=(cart[x.id]||0)+x.qty);save('cart',cart);drawCart();toast('Items added again 🔁')}
+ if(d.tr){track(d.tr);toast('Tracking order #'+d.tr)}});
+$('#apply').onclick=()=>{const k=$('#cp').value.trim().toUpperCase();if(COUPONS[k]){cpn=k;save('coupon',k);$('#cerr').style.color='#14783a';$('#cerr').textContent='✔ '+COUPONS[k].d+' applied';drawCart()}else{$('#cerr').style.color='#d11a2a';$('#cerr').textContent='Invalid coupon code'}};
+$('#clr').onclick=()=>{cart={};save('cart',cart);drawCart();toast('Cart cleared')};
+$('#f').onsubmit=async e=>{e.preventDefault();let ok=true;const set=(i,m)=>{$(i).textContent=m;if(m)ok=false};
+ set('#e1',$('#name').value.trim().length<3?'Enter a valid name (min 3 letters)':'');set('#e2',/^[6-9]\d{9}$/.test($('#phone').value)?'':'Enter a valid 10-digit mobile number');set('#e3',$('#addr').value.trim().length<10?'Address must be at least 10 characters':'');
+ if(!Object.keys(cart).length){toast('Cart is empty!');return}
+ if(!user){toast('Please login first');setTimeout(()=>location.href='login.html?next=cart.html',900);return}
+ if(!ok)return;
+ const id='FX'+String(Date.now()).slice(-6),T=window.TOT,btn=$('#place');
+ const o={id,email:user.email,customer:user.name,name:$('#name').value.trim(),phone:$('#phone').value,addr:$('#addr').value.trim(),pay:$('#pay').value,
+  items:Object.keys(cart).map(i=>{const m=MENU.find(x=>x.id==i);return{id:m.id,name:m.name,price:m.price,qty:cart[i]}}),
+  sub:T.sub,discount:T.dis,delivery:T.del,total:T.total,coupon:cpn||'',status:'Placed',createdAt:Date.now()};
+ btn.disabled=true;btn.textContent='Placing order…';
+ try{await api('','PATCH',{[`orders/${id}`]:o,[`userOrders/${ekey(user.email)}/${id}`]:o});   // saved in 2 places at once
+  cart={};save('cart',cart);cpn=null;save('coupon',null);orders.unshift(o);drawCart();e.target.reset();
+  $('#ok').style.display='block';$('#ok').textContent='✅ Order #'+id+' placed successfully! Thank you, '+user.name+'.';track(id)}
+ catch{toast('⚠️ Could not place order. Check your internet connection.')}
+ btn.disabled=false;btn.textContent='Place Order'};
+drawCart();ready.then(()=>{drawCart();loadOrders()});
+</script></body></html>

@@ -1,0 +1,28 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Home - FoodieExpress</title><link rel="stylesheet" href="style.css"></head>
+<body data-page="index">
+<div class="hero"><div><h1>Hungry? Get <span>delicious food</span> delivered fast!</h1><p>Fresh, hot and tasty meals from the best kitchens, at your doorstep in 30 minutes.</p>
+<form class="sbox" id="sf"><input id="q" placeholder="Search pizza, biryani, shake..."><button class="btn">Search</button></form><br><a href="menu.html" class="btn">Order Now</a></div>
+<div class="hero-art">🍕🍔</div></div>
+<section><div class="wrap stats"><div class="stat"><b data-n="12000">0</b>Happy Customers</div><div class="stat"><b data-n="150">0</b>Restaurants</div><div class="stat"><b data-n="30">0</b>Min Delivery</div><div class="stat"><b data-n="4">0</b>★ Rating</div></div></section>
+<section><div class="wrap"><h2 class="title">Browse by Category</h2><div class="cats" id="cats"></div></div></section>
+<section><div class="wrap"><h2 class="title">🔥 Top Rated Dishes</h2><div class="grid" id="top"></div></div></section>
+<section><div class="wrap"><h2 class="title">Today's Offers</h2><div class="grid" id="offers"></div></div></section>
+<section><div class="wrap"><h2 class="title">What Customers Say</h2><div class="slider"><button class="nb l" id="pv">‹</button><q id="tq"></q><p id="ta" style="margin-top:12px;color:var(--muted)"></p><button class="nb r" id="nx">›</button></div></div></section>
+<section><div class="wrap" style="max-width:520px"><h2 class="title">Subscribe for Deals</h2><form id="nl" novalidate><input type="email" id="ne" placeholder="Your email"><div class="err" id="nerr"></div><button class="btn">Subscribe</button></form></div></section>
+<script src="app.js"></script><script>
+const ico={Pizza:'🍕',Burgers:'🍔',Indian:'🍛',Snacks:'🍟',Drinks:'🥤',Desserts:'🍫'};
+$('#cats').innerHTML=Object.keys(ico).map(c=>`<a class="cat" href="menu.html?cat=${c}"><span>${ico[c]}</span>${c}</a>`).join('');
+const drawTop=()=>$('#top').innerHTML=[...MENU].sort((a,b)=>b.rating-a.rating).slice(0,4).map(card).join('');
+drawTop();ready.then(drawTop);
+$('#offers').innerHTML=Object.entries(COUPONS).map(([k,v])=>`<div class="offer"><h3>${v.d}</h3><code>${k}</code><button data-copy="${k}">Copy Code</button></div>`).join('');
+document.addEventListener('click',e=>{const k=e.target.dataset.copy;if(k){navigator.clipboard&&navigator.clipboard.writeText(k).catch(()=>{});toast('Copied '+k+' 📋')}});
+$('#sf').onsubmit=e=>{e.preventDefault();location.href='menu.html?q='+encodeURIComponent($('#q').value)};
+const T=[['Fastest delivery ever! Biryani was still piping hot.','Aarav, Mumbai'],['Great variety and the offers are amazing.','Priya, Pune'],['Smooth ordering experience, loved the brownie!','Rohan, Delhi']];let ti=0;
+function showT(){$('#tq').textContent='“'+T[ti][0]+'”';$('#ta').textContent='— '+T[ti][1]}
+$('#pv').onclick=()=>{ti=(ti+2)%3;showT()};$('#nx').onclick=()=>{ti=(ti+1)%3;showT()};showT();setInterval(()=>{ti=(ti+1)%3;showT()},5000);
+/* Newsletter -> Firebase: subscribers */
+$('#nl').onsubmit=async e=>{e.preventDefault();const em=$('#ne').value.trim();const ok=/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em);
+ $('#nerr').textContent=ok?'':'Enter a valid email address';if(!ok)return;
+ try{await api('subscribers','POST',{email:em,createdAt:Date.now()});toast('🎉 Subscribed successfully!');e.target.reset()}catch{toast('⚠️ Server not reachable. Try again.')}};
+$$('[data-n]').forEach(el=>{const n=+el.dataset.n;let c=0;const s=Math.max(1,Math.ceil(n/50));const h=setInterval(()=>{c=Math.min(n,c+s);el.textContent=c.toLocaleString();if(c>=n)clearInterval(h)},30)});
+</script></body></html>

@@ -1,0 +1,17 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Contact - FoodieExpress</title><link rel="stylesheet" href="style.css"></head>
+<body data-page="contact"><section><div class="wrap"><h1 class="pt">Contact Us</h1><p class="sub">We would love to hear from you</p>
+<div class="two"><div class="box"><form id="f" novalidate><div><input id="name" placeholder="Full Name"><div class="err" id="e1"></div></div><div><input id="email" placeholder="Email Address"><div class="err" id="e2"></div></div>
+<div><select id="sub"><option value="">Select subject</option><option>Order issue</option><option>Feedback</option><option>Partnership</option></select><div class="err" id="e3"></div></div>
+<div><textarea id="msg" rows="4" placeholder="Your message"></textarea><div class="err" id="e4"></div></div><button class="btn" id="send">Send Message</button><div class="ok" id="ok">✅ Message sent! We will reply soon.</div></form></div>
+<div class="box"><h3>📍 Address</h3><p>12 Food Street, Andheri West, Mumbai</p><br><h3>📞 Phone</h3><p>+91 98765 43210</p><br><h3>✉️ Email</h3><p>help@foodieexpress.com</p><br><h3>⏰ Hours</h3><p>10 AM – 11 PM, all days</p></div></div></div></section>
+<script src="app.js"></script><script>
+$('#f').onsubmit=async e=>{e.preventDefault();let ok=true;const set=(i,m)=>{$(i).textContent=m;if(m)ok=false};
+set('#e1',$('#name').value.trim().length<3?'Enter a valid name':'');set('#e2',/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test($('#email').value)?'':'Enter a valid email address');
+set('#e3',$('#sub').value?'':'Please select a subject');set('#e4',$('#msg').value.trim().length<10?'Message must be at least 10 characters':'');
+$('#ok').style.display='none';if(!ok)return;
+const b=$('#send');b.disabled=true;b.textContent='Sending…';
+try{await api('messages','POST',{name:$('#name').value.trim(),email:$('#email').value.trim(),subject:$('#sub').value,message:$('#msg').value.trim(),createdAt:Date.now()});   // saved in Firebase
+ $('#ok').style.display='block';toast('Message sent ✉️');e.target.reset()}
+catch{toast('⚠️ Could not send. Check your internet connection.')}
+b.disabled=false;b.textContent='Send Message'};
+</script></body></html>

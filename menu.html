@@ -1,0 +1,15 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Menu - FoodieExpress</title><link rel="stylesheet" href="style.css"></head>
+<body data-page="menu"><section><div class="wrap"><h1 class="pt">Our Menu</h1><p class="sub">Choose from our freshly prepared dishes</p>
+<div class="tools"><input id="s" placeholder="🔍 Search dishes..."><select id="sort"><option value="">Sort: Default</option><option value="pl">Price: Low to High</option><option value="ph">Price: High to Low</option><option value="r">Top Rated</option></select>
+<label><input type="checkbox" id="veg" style="width:auto"> Veg only</label><label><input type="checkbox" id="wl" style="width:auto"> ❤️ Wishlist</label></div>
+<div class="chips" id="chips"></div><div class="grid" id="g"></div></div></section>
+<script src="app.js"></script><script>
+const P=new URLSearchParams(location.search);let cat=P.get('cat')||'All';$('#s').value=P.get('q')||'';
+function chips(){$('#chips').innerHTML=['All',...new Set(MENU.map(m=>m.cat))].map(c=>`<button class="${c==cat?'active':''}" data-c="${c}">${c}</button>`).join('')}
+function draw(){let l=MENU.filter(m=>(cat=='All'||m.cat==cat)&&m.name.toLowerCase().includes($('#s').value.toLowerCase())&&(!$('#veg').checked||m.veg)&&(!$('#wl').checked||wish.includes(m.id)));
+ const s=$('#sort').value;if(s=='pl')l.sort((a,b)=>a.price-b.price);if(s=='ph')l.sort((a,b)=>b.price-a.price);if(s=='r')l.sort((a,b)=>b.rating-a.rating);
+ $('#g').innerHTML=l.length?l.map(card).join(''):'<p class="empty">😕 No dishes found. Try a different search.</p>'}
+document.addEventListener('click',e=>{if(e.target.dataset.c){cat=e.target.dataset.c;chips();draw()}});
+['s','sort','veg','wl'].forEach(i=>$('#'+i).addEventListener('input',draw));
+chips();draw();ready.then(()=>{chips();draw()});      // render at once, refresh when Firebase menu arrives
+</script></body></html>

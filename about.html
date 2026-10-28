@@ -1,0 +1,12 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>About - FoodieExpress</title><link rel="stylesheet" href="style.css"></head>
+<body data-page="about"><section><div class="wrap"><h1 class="pt">About FoodieExpress</h1><p class="sub">Great food, delivered with love since 2024</p>
+<div class="box" style="margin-bottom:30px"><p>FoodieExpress started with a simple idea: make good food reachable for everyone. We partner with local kitchens, use quality ingredients and deliver within 30 minutes, so every meal reaches you fresh and hot.</p></div>
+<h2 class="title">Meet the Team</h2><div class="grid" id="team"></div>
+<h2 class="title" style="margin-top:40px">Frequently Asked Questions</h2>
+<details><summary>How long does delivery take?</summary><p>Usually 30 minutes, depending on your location.</p></details>
+<details><summary>Is there a delivery charge?</summary><p>₹30 for orders below ₹500. Orders above ₹500 get free delivery.</p></details>
+<details><summary>How do I use a coupon?</summary><p>Open the cart, type a code like FOOD10 and press Apply.</p></details>
+<details><summary>Which payment methods are supported?</summary><p>UPI, Cash on Delivery and Credit/Debit Card.</p></details></div></section>
+<script src="app.js"></script><script>
+$('#team').innerHTML=[['👨‍🍳','Chef Rakesh','Head Chef'],['👩‍💼','Neha Sharma','Operations'],['🧑‍💻','Arjun Mehta','Tech Lead'],['🛵','Sameer Khan','Delivery Head']].map(t=>`<div class="card"><div class="em">${t[0]}</div><h3>${t[1]}</h3><p>${t[2]}</p></div>`).join('');
+</script></body></html>

@@ -1,0 +1,22 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Login - FoodieExpress</title><link rel="stylesheet" href="style.css"></head>
+<body data-page="login"><section><div class="wrap" style="max-width:440px"><div class="box"><div class="tabs"><button class="active" id="tl">Login</button><button id="ts">Sign Up</button></div>
+<form id="f" novalidate><div id="nw" style="display:none"><input id="name" placeholder="Full Name"><div class="err" id="e0"></div></div><div><input id="email" placeholder="Email Address"><div class="err" id="e1"></div></div>
+<div><div class="pw"><input id="pass" type="password" placeholder="Password (min 6 characters)"><button type="button" id="eye">👁️</button></div><div class="err" id="e2"></div></div><button class="btn" id="go">Login</button><div class="err" id="e3" style="text-align:center"></div></form></div></div></section>
+<script src="app.js"></script><script>
+let mode='login';
+if(user){document.querySelector('.box').innerHTML=`<h2>👤 Welcome, ${esc(user.name)}!</h2><p class="sub" style="text-align:left">${esc(user.email)}</p><p id="oc">Loading your orders…</p><br><a class="btn" href="menu.html">Order Food</a>`;
+ api('userOrders/'+ekey(user.email)).then(o=>$('#oc').textContent='You have '+(o?Object.keys(o).length:0)+' past order(s).').catch(()=>$('#oc').textContent='')}
+function tab(m){mode=m;$('#tl').className=m=='login'?'active':'';$('#ts').className=m=='signup'?'active':'';$('#nw').style.display=m=='signup'?'block':'none';$('#go').textContent=m=='login'?'Login':'Create Account';$('#e3').textContent=''}
+if(!user){$('#tl').onclick=()=>tab('login');$('#ts').onclick=()=>tab('signup');
+$('#eye').onclick=()=>{const p=$('#pass');p.type=p.type=='password'?'text':'password'};
+$('#f').onsubmit=async e=>{e.preventDefault();let ok=true;const set=(i,m)=>{$(i).textContent=m;if(m)ok=false};
+ set('#e0',mode=='signup'&&$('#name').value.trim().length<3?'Enter your full name':'');set('#e1',/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test($('#email').value)?'':'Enter a valid email address');set('#e2',$('#pass').value.length<6?'Password must be at least 6 characters':'');
+ if(!ok)return;const em=$('#email').value.trim().toLowerCase(),btn=$('#go'),label=btn.textContent;btn.disabled=true;btn.textContent='Please wait…';$('#e3').textContent='';
+ try{const key='users/'+ekey(em),hash=await sha(em+':'+$('#pass').value);let u=await api(key);        // user record in Firebase
+  if(mode=='signup'){if(u){$('#e3').textContent='Account already exists. Please login.';return}
+   u={name:$('#name').value.trim(),email:em,hash,createdAt:Date.now()};await api(key,'PUT',u)}
+  else if(!u||u.hash!==hash){$('#e3').textContent='Invalid email or password';return}
+  save('user',{name:u.name,email:u.email});toast('Welcome '+u.name+' 🎉');setTimeout(()=>location.href=new URLSearchParams(location.search).get('next')||'index.html',800)}
+ catch{$('#e3').textContent='Server not reachable. Check your internet connection.'}
+ finally{btn.disabled=false;btn.textContent=label}}}
+</script></body></html>

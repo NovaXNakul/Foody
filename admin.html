@@ -1,0 +1,27 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Admin - FoodieExpress</title><link rel="stylesheet" href="style.css"></head>
+<body data-page="admin"><section><div class="wrap"><h1 class="pt">Admin Panel</h1><p class="sub">Manage orders, menu, messages and users (live from Firebase)</p>
+<div class="box" id="gate" style="max-width:360px;margin:auto"><form id="gf" novalidate><input type="password" id="ap" placeholder="Admin passcode"><div class="err" id="ge"></div><button class="btn">Unlock</button></form></div>
+<div id="panel" style="display:none"><div class="chips" id="tabs"></div><div style="text-align:center;margin-bottom:14px"><button class="btn alt" id="rf">🔄 Refresh</button></div><div class="box scroll" id="out"></div></div></div></section>
+<script src="app.js"></script><script>
+const ADMIN_PASS='admin123';                       // demo passcode (client-side only – not real security)
+const TABS=['Orders','Menu','Messages','Subscribers','Users'],STAT=['Placed','Preparing','On the way','Delivered'];let tab='Orders';
+const L=o=>o?Object.values(o).filter(Boolean):[],D=t=>new Date(t).toLocaleString();
+const tbl=(h,rows)=>rows.length?`<table class="tbl"><tr>${h.map(x=>`<th>${x}</th>`).join('')}</tr>${rows.join('')}</table>`:'<p class="empty">Nothing here yet.</p>';
+async function load(){$('#out').innerHTML='<p class="empty">⏳ Loading…</p>';
+ $('#tabs').innerHTML=TABS.map(t=>`<button class="${t==tab?'active':''}" data-t="${t}">${t}</button>`).join('');
+ try{let h='';
+  if(tab=='Orders')h=tbl(['Order','Customer','Items','Total','Payment','Time','Status'],L(await api('orders')).sort((a,b)=>b.createdAt-a.createdAt).map(o=>`<tr><td><b>#${esc(o.id)}</b></td><td>${esc(o.name)}<br><small>${esc(o.phone)}<br>${esc(o.addr)}</small></td><td>${L(o.items).map(i=>esc(i.name)+' ×'+i.qty).join('<br>')}</td><td>₹${o.total}</td><td>${esc(o.pay)}</td><td>${D(o.createdAt)}</td>
+   <td><select data-st="${esc(o.id)}" data-em="${esc(o.email)}">${STAT.map(s=>`<option ${s==o.status?'selected':''}>${s}</option>`).join('')}</select></td></tr>`));
+  if(tab=='Menu'){await ready;h=tbl(['Item','Category','Price','Available'],MENU.map(m=>`<tr><td>${m.emoji} ${esc(m.name)}</td><td>${esc(m.cat)}</td><td>₹${m.price}</td><td><input type="checkbox" style="width:auto" data-av="${m.id}" ${m.available===false?'':'checked'}></td></tr>`))}
+  if(tab=='Messages')h=tbl(['Time','Name','Email','Subject','Message'],L(await api('messages')).sort((a,b)=>b.createdAt-a.createdAt).map(m=>`<tr><td>${D(m.createdAt)}</td><td>${esc(m.name)}</td><td>${esc(m.email)}</td><td>${esc(m.subject)}</td><td>${esc(m.message)}</td></tr>`));
+  if(tab=='Subscribers')h=tbl(['Email','Subscribed on'],L(await api('subscribers')).map(s=>`<tr><td>${esc(s.email)}</td><td>${D(s.createdAt)}</td></tr>`));
+  if(tab=='Users')h=tbl(['Name','Email','Joined'],L(await api('users')).map(u=>`<tr><td>${esc(u.name)}</td><td>${esc(u.email)}</td><td>${D(u.createdAt)}</td></tr>`));
+  $('#out').innerHTML=h}
+ catch{$('#out').innerHTML='<p class="empty">⚠️ Could not reach the database.</p>'}}
+$('#gf').onsubmit=e=>{e.preventDefault();if($('#ap').value==ADMIN_PASS){$('#gate').style.display='none';$('#panel').style.display='block';load()}else $('#ge').textContent='Wrong passcode'};
+document.addEventListener('click',e=>{const t=e.target.dataset.t;if(t){tab=t;load()}if(e.target.id=='rf')load()});
+$('#out').addEventListener('change',async e=>{const d=e.target.dataset;       // status / availability updates -> Firebase
+ try{if(d.st){const v=e.target.value;await api('','PATCH',{[`orders/${d.st}/status`]:v,[`userOrders/${ekey(d.em)}/${d.st}/status`]:v});toast('Order status updated ✅')}
+  if(d.av){await api('menu/'+d.av,'PATCH',{available:e.target.checked});toast('Menu updated ✅')}}
+ catch{toast('⚠️ Update failed')}});
+</script></body></html>
