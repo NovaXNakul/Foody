@@ -232,11 +232,6 @@ This project demonstrates:
 * Enhanced administrative access controls.
 * Deployment using Firebase Hosting.
 
-## 👨‍💻 Author
-
-**Nakul Sonkusare**
-
-GitHub: [NovaXNakul](https://github.com/NovaXNakul)
 
 Project Repository: [Foody](https://github.com/NovaXNakul/Foody)
 
